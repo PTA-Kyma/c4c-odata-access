@@ -1,4 +1,5 @@
-import { promises } from 'fs';
+import { fstat, promises } from 'fs';
+import path from 'path';
 import { parseStringPromise } from 'xml2js';
 import {
   Config,
@@ -15,9 +16,9 @@ import {
   Schema,
 } from './edmx.model';
 
-const configFile = 'odata/c4codataapi.json';
-const input = 'odata/c4codataapi.edmx';
-const output = 'src/odata';
+// const configFile = 'odata/c4codataapi.json';
+// const input = 'odata/c4codataapi.edmx';
+// const output = 'src/odata';
 
 interface Context {
   entityTypes: { [name: string]: EntityType };
@@ -33,8 +34,28 @@ const context: Context = {
   associations: {},
 };
 
+let [_1, _2, sourceFilePath, outputDirectory] = process.argv;
+if (!sourceFilePath || !outputDirectory) {
+  throw new Error(
+    'Missing parameters, use generate {source file} {output folder}\r\nExample: generate path/file.edmx path/src/folder'
+  );
+}
+
+const projectPath = path.resolve('../..');
+
+sourceFilePath = path.join(projectPath, sourceFilePath);
+const configFilePath = sourceFilePath.replace('.edmx', '.json');
+outputDirectory = path.join(projectPath, outputDirectory);
+console.log(sourceFilePath, outputDirectory);
+
 async function main() {
-  context.config = JSON.parse(await promises.readFile(configFile, 'utf-8'));
+  try {
+    context.config = JSON.parse(await promises.readFile(configFilePath, 'utf-8'));
+  } catch (err) {
+    console.error('Failed to read from ' + configFilePath);
+    throw err;
+  }
+
   if (!context.config.ODataService) {
     context.config.ODataService = 'c4codataapi';
   }
@@ -43,7 +64,7 @@ async function main() {
     context.config.Namespace = 'c4codata';
   }
 
-  const f = await promises.readFile(input, { encoding: 'utf-8' });
+  const f = await promises.readFile(sourceFilePath, { encoding: 'utf-8' });
   const xml = await parseStringPromise(f);
   const schemas = xml['edmx:Edmx']['edmx:DataServices'][0].Schema as Schema[];
 
@@ -63,16 +84,26 @@ async function main() {
     });
   });
 
-  await promises.writeFile('tmp/entityTypes.json', JSON.stringify(context.entityTypes, null, '\t'));
+  const tmp = path.join(projectPath, 'tmp');
+  try {
+    await promises.mkdir(tmp);
+  } catch (err) {
+    // maybe exists alreadyu
+  }
+
   await promises.writeFile(
-    'tmp/entityCollections.json',
+    tmp + '/entityTypes.json',
+    JSON.stringify(context.entityTypes, null, '\t')
+  );
+  await promises.writeFile(
+    tmp + '/entityCollections.json',
     JSON.stringify(context.entitySets, null, '\t')
   );
 
   if (!context.config.EntitySets) return;
 
   await promises.writeFile(
-    output + '/odataService.ts',
+    outputDirectory + '/odataService.ts',
     `
   export interface ODataService { 
     query<T>(text: string): Promise<T>; 
@@ -148,7 +179,7 @@ async function generateEntitySetConfig(context: Context, entitySetName: string):
     });
 
     const outputFile = await promises.open(
-      `${output}/${context.config.ODataService}.${entitySetName}.ts`,
+      `${outputDirectory}/${context.config.ODataService}.${entitySetName}.ts`,
       'w'
     );
     await outputFile.writeFile(outputLines.join('\r\n'));
@@ -181,7 +212,7 @@ async function generateMetadataFile(context: Context): Promise<void> {
   outputLines.push('}');
 
   await promises.writeFile(
-    output + '/' + context.config.ODataService + '.metadata.ts',
+    outputDirectory + '/' + context.config.ODataService + '.metadata.ts',
     outputLines.join('\r\n')
   );
 }
