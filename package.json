@@ -3,22 +3,22 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/main.ts",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc --declarationMap"
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.20.0",
-    "tslib": "^2.0.3",
-    "typescript": "^4.0.3"
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "@types/node": "^14.14.2",
     "@types/xml2js": "^0.4.5",
     "ts-node": "^9.0.0",
-    "typescript": "^4.0.5",
-    "xml2js": "^0.4.23"
+    "tslib": "^2.0.3",
+    "typescript": "^4.0.5"
   }
 }
