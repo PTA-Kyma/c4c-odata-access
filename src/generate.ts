@@ -1,4 +1,4 @@
-import { fstat, promises } from 'fs';
+import { promises } from 'fs';
 import path from 'path';
 import { parseStringPromise } from 'xml2js';
 import {
@@ -7,18 +7,7 @@ import {
   setupDefaultsWhereMissing,
   TypescriptOperationConfig,
 } from './config.model';
-import {
-  Association,
-  EntitySet,
-  EntityType,
-  NavigationProperty,
-  Property,
-  Schema,
-} from './edmx.model';
-
-// const configFile = 'odata/c4codataapi.json';
-// const input = 'odata/c4codataapi.edmx';
-// const output = 'src/odata';
+import { Association, EntitySet, EntityType, Schema } from './edmx.model';
 
 interface Context {
   entityTypes: { [name: string]: EntityType };
@@ -102,15 +91,6 @@ async function main() {
 
   if (!context.config.EntitySets) return;
 
-  await promises.writeFile(
-    outputDirectory + '/odataService.ts',
-    `
-  export interface ODataService { 
-    query<T>(text: string): Promise<T>; 
-  }
-  `
-  );
-
   for (const name in context.config.EntitySets) {
     await generateEntitySetConfig(context, name);
   }
@@ -138,6 +118,7 @@ async function generateEntitySetConfig(context: Context, entitySetName: string):
     }
 
     setupDefaultsWhereMissing(entitySetName, entityType, config.operations);
+    outputLines.push(`import { ODataService } from 'c4c-odata-access';\r\n`);
 
     outputLines.push(`export const ${entitySet.$.Name} = {`);
     Object.entries(config.operations).forEach(([operationName, e]) => {
