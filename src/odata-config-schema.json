@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "properties": {
+    "ODataService": { "type": "string" },
+    "Namespace": { "type": "string" },
+    "EntitySets": {
+      "type": "object",
+      "additionalProperties": {
+        "properties": {
+          "operations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "enum": ["fetch", "query"]
+                },
+                "properties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "expand": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
