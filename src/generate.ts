@@ -1,5 +1,5 @@
 import { promises } from 'fs';
-import path from 'path';
+import { join, resolve } from 'path';
 import { parseStringPromise } from 'xml2js';
 import {
   Config,
@@ -30,11 +30,11 @@ if (!sourceFilePath || !outputDirectory) {
   );
 }
 
-const projectPath = path.resolve('../..');
+const projectPath = resolve('../..');
 
-sourceFilePath = path.join(projectPath, sourceFilePath);
+sourceFilePath = join(projectPath, sourceFilePath);
 const configFilePath = sourceFilePath.replace('.edmx', '.json');
-outputDirectory = path.join(projectPath, outputDirectory);
+outputDirectory = join(projectPath, outputDirectory);
 console.log(sourceFilePath, outputDirectory);
 
 async function main() {
@@ -73,7 +73,7 @@ async function main() {
     });
   });
 
-  const tmp = path.join(projectPath, 'tmp');
+  const tmp = join(projectPath, 'tmp');
   try {
     await promises.mkdir(tmp);
   } catch (err) {
