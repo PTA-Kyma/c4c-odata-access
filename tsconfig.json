@@ -1,0 +1,22 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "outDir": "lib",
+    "types": [],
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./",
+    "sourceMap": true,
+    "declaration": false,
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "target": "es5",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "lib": [
+      "es2018",
+      "dom"
+    ]
+  }
+}
