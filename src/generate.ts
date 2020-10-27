@@ -112,13 +112,12 @@ async function generateEntitySetConfig(context: Context, entitySetName: string):
 
   console.log('Generating EntitySet ' + entitySetName);
   try {
-    const outputLines = ["import { ODataService } from './odataService';\r\n"];
+    const outputLines = ["import { ODataService } from 'c4c-odata-access';\r\n"];
     if (!config.operations) {
       config.operations = defaultOperations(entityType);
     }
 
     setupDefaultsWhereMissing(entitySetName, entityType, config.operations);
-    outputLines.push(`import { ODataService } from 'c4c-odata-access';\r\n`);
 
     outputLines.push(`export const ${entitySet.$.Name} = {`);
     Object.entries(config.operations).forEach(([operationName, e]) => {
