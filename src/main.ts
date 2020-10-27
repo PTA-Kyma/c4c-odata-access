@@ -1,3 +1,4 @@
 import { ODataService } from './odataService';
 import { parseDate } from './odataHelpers';
-export { ODataService, parseDate };
+import { C4CService, Credentials } from './c4cService';
+export { ODataService, parseDate, C4CService, Credentials };
