@@ -1,6 +1,6 @@
 {
-  "name": "c4c-odata-access",
-  "version": "1.0.0",
+  "name": "@pta/c4c-odata-access",
+  "version": "0.1.0",
   "description": "",
   "main": "lib/main.js",
   "scripts": {
