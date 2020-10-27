@@ -1,5 +1,5 @@
 {
-  "name": "@pta/c4c-odata-access",
+  "name": "@pta-kyma/c4c-odata-access",
   "version": "0.1.0",
   "description": "",
   "main": "lib/main.js",
