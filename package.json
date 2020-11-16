@@ -1,6 +1,6 @@
 {
   "name": "@pta-kyma/c4c-odata-access",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "",
   "main": "lib/main.js",
   "scripts": {

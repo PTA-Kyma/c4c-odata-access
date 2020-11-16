@@ -19,7 +19,7 @@ if (!sourceFilePath || !outputDirectory) {
   );
 }
 
-const projectPath = resolve('../..');
+const projectPath = resolve('../../..');
 
 sourceFilePath = join(projectPath, sourceFilePath);
 const configFilePath = sourceFilePath.replace('.edmx', '.json');
