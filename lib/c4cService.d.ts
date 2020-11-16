@@ -13,6 +13,7 @@ export interface BearerTokenCredentials {
 }
 export declare class C4CService implements ODataService {
     axios: AxiosInstance;
+    debugLogger: (string: any) => void;
     constructor(credentials: UsernamePasswordCredentials | BearerTokenCredentials);
     query<T>(text: string): Promise<T>;
 }
