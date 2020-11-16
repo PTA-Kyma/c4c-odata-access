@@ -21,7 +21,7 @@ export async function generateEntitySetConfig(
 
   console.log('Generating EntitySet ' + entitySetName);
   try {
-    const outputLines = ["import { ODataService } from 'c4c-odata-access';\r\n"];
+    const outputLines = ["import { ODataService } from '@pta-kyma/c4c-odata-access';\r\n"];
     if (!config.operations) {
       config.operations = defaultOperations(entityType);
     }
