@@ -65,3 +65,4 @@ export interface AssociationEnd {
         Role: string;
     };
 }
+//# sourceMappingURL=edmx.model.d.ts.map

@@ -11,9 +11,10 @@ export interface EntitySetConfig {
 }
 
 export interface TypescriptOperationConfig {
+  onlySelectedProperties: boolean;
   entityName: string;
   type: 'query' | 'create' | 'update' | 'fetch';
-  properties: string[];
+  properties?: string[];
   expand?: string[];
 }
 
@@ -25,11 +26,13 @@ export function defaultOperations(
       entityName: entityType.$.Name + 'QueryModel',
       type: 'query',
       properties: entityType.Property.map((p) => p.$.Name),
+      onlySelectedProperties:false
     },
     fetch: {
       entityName: entityType.$.Name,
       type: 'fetch',
       properties: entityType.Property.map((p) => p.$.Name),
+      onlySelectedProperties:false
     },
   };
 }
@@ -50,7 +53,10 @@ export function setupDefaultsWhereMissing(
       o.entityName = `${entityType.$.Name}_${name}_Model`;
     }
 
-    if (!o.properties) {
+    if (o.properties) {
+      console.log('onlySelectedProperties')
+      o.onlySelectedProperties = true;
+    } else{
       switch (o.type) {
         case 'query':
         case 'fetch':

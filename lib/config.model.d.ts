@@ -12,9 +12,10 @@ export interface EntitySetConfig {
     };
 }
 export interface TypescriptOperationConfig {
+    onlySelectedProperties: boolean;
     entityName: string;
     type: 'query' | 'create' | 'update' | 'fetch';
-    properties: string[];
+    properties?: string[];
     expand?: string[];
 }
 export declare function defaultOperations(entityType: EntityType): {
@@ -23,3 +24,4 @@ export declare function defaultOperations(entityType: EntityType): {
 export declare function setupDefaultsWhereMissing(entitySetName: string, entityType: EntityType, operations: {
     [name: string]: TypescriptOperationConfig;
 }): void;
+//# sourceMappingURL=config.model.d.ts.map
