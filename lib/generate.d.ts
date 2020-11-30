@@ -1,3 +1,3 @@
-import { Context } from './context';
-export declare const context: Context;
+import winston from 'winston';
+export declare const logger: winston.Logger;
 //# sourceMappingURL=generate.d.ts.map

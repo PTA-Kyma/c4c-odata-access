@@ -1,8 +1,13 @@
-import { EntityType } from './edmx.model';
+import { EdmxEntityType } from './edmx.model';
 export interface Config {
-    ODataService: string;
-    Namespace: string;
-    EntitySets?: {
+    generateTmpEdmxFile: boolean;
+    services: {
+        [ODataService: string]: ODataServiceConfig;
+    };
+}
+export interface ODataServiceConfig {
+    baseUrl: string;
+    entitySets: {
         [name: string]: EntitySetConfig;
     };
 }
@@ -18,10 +23,10 @@ export interface TypescriptOperationConfig {
     properties?: string[];
     expand?: string[];
 }
-export declare function defaultOperations(entityType: EntityType): {
+export declare function defaultOperations(entityType: EdmxEntityType): {
     [name: string]: TypescriptOperationConfig;
 };
-export declare function setupDefaultsWhereMissing(entitySetName: string, entityType: EntityType, operations: {
+export declare function setupDefaultsWhereMissing(entitySetName: string, entityType: EdmxEntityType, operations: {
     [name: string]: TypescriptOperationConfig;
 }): void;
 //# sourceMappingURL=config.model.d.ts.map

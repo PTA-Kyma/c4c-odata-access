@@ -1,3 +1,3 @@
-import { Context } from '../context';
-export declare function generateMetadataFile(context: Context, outputDirectory: string): Promise<void>;
+import { ParsedEdmxFile } from '../parseEdmxFile';
+export declare function generateMetadataFile(edmx: ParsedEdmxFile, outputDirectory: string): Promise<void>;
 //# sourceMappingURL=metadataFile.d.ts.map

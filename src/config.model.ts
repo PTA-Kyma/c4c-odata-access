@@ -1,9 +1,16 @@
-import { EntityType } from './edmx.model';
+import { EdmxEntityType } from './edmx.model';
+import { logger } from './generate';
 
 export interface Config {
-  ODataService: string;
-  Namespace: string;
-  EntitySets?: { [name: string]: EntitySetConfig };
+  generateTmpEdmxFile: boolean;
+  services: {
+    [ODataService: string]: ODataServiceConfig;
+  };
+}
+
+export interface ODataServiceConfig {
+  baseUrl: string;
+  entitySets: { [name: string]: EntitySetConfig };
 }
 
 export interface EntitySetConfig {
@@ -19,27 +26,27 @@ export interface TypescriptOperationConfig {
 }
 
 export function defaultOperations(
-  entityType: EntityType
+  entityType: EdmxEntityType
 ): { [name: string]: TypescriptOperationConfig } {
   return {
     query: {
       entityName: entityType.$.Name + 'QueryModel',
       type: 'query',
-      properties: entityType.Property.map((p) => p.$.Name),
-      onlySelectedProperties:false
+      // properties: entityType.Property.map((p) => p.$.Name),
+      onlySelectedProperties: false,
     },
     fetch: {
       entityName: entityType.$.Name,
       type: 'fetch',
-      properties: entityType.Property.map((p) => p.$.Name),
-      onlySelectedProperties:false
+      // properties: entityType.Property.map((p) => p.$.Name),
+      onlySelectedProperties: false,
     },
   };
 }
 
 export function setupDefaultsWhereMissing(
   entitySetName: string,
-  entityType: EntityType,
+  entityType: EdmxEntityType,
   operations: { [name: string]: TypescriptOperationConfig }
 ): void {
   Object.entries(operations).forEach(([name, o]) => {
@@ -54,9 +61,8 @@ export function setupDefaultsWhereMissing(
     }
 
     if (o.properties) {
-      console.log('onlySelectedProperties')
       o.onlySelectedProperties = true;
-    } else{
+    } else {
       switch (o.type) {
         case 'query':
         case 'fetch':

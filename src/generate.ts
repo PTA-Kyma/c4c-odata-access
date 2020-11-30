@@ -1,97 +1,131 @@
-import { Context } from './context';
-import { generateEntitySetConfig } from './generators/entitySet';
-import { generateMetadataFile } from './generators/metadataFile';
 import { promises } from 'fs';
-import { join, resolve } from 'path';
+import { dirname, join, resolve } from 'path';
+import winston, { createLogger, format } from 'winston';
 import { parseStringPromise } from 'xml2js';
-import {
-  Config,
-  defaultOperations,
-  setupDefaultsWhereMissing,
-  TypescriptOperationConfig,
-} from './config.model';
-import { Association, EntitySet, EntityType, Schema } from './edmx.model';
+import { Config, ODataServiceConfig } from './config.model';
+import { EdmxFile } from './edmx.model';
+import { generateEntitySet } from './generators/entitySet';
+import { generateMetadataFile } from './generators/metadataFile';
+import { parseEdmxFile, ParsedEdmxFile } from './parseEdmxFile';
+const { combine, timestamp, label, prettyPrint, colorize } = format;
 
-let [_1, _2, sourceFilePath, outputDirectory] = process.argv;
-if (!sourceFilePath || !outputDirectory) {
+let [_1, _2, configFilePath, outputDirectory] = process.argv;
+if (!configFilePath || !outputDirectory) {
   throw new Error(
-    'Missing parameters, use generate {source file} {output folder}\r\nExample: generate path/file.edmx path/src/folder'
+    'Missing parameters, use generate {config file} {output folder}\r\nExample: generate path/file.edmx path/src/folder'
   );
 }
 
-const projectPath = resolve('../../..');
+configFilePath = resolve(configFilePath);
+outputDirectory = resolve(outputDirectory);
+const configFilePathBase = dirname(configFilePath);
 
-sourceFilePath = join(projectPath, sourceFilePath);
-const configFilePath = sourceFilePath.replace('.edmx', '.json');
-outputDirectory = join(projectPath, outputDirectory);
-console.log(sourceFilePath, outputDirectory);
+export const logger = createLogger({
+  level: 'debug',
+  transports: [
+    new winston.transports.Console({
+      format: combine(
+        colorize(),
+        timestamp(),
+        format.printf((i) => `${i.level} ${i.message}`)
+      ),
+    }),
+  ],
+});
 
-export const context: Context = {
-  entitySets: {},
-  entityTypes: {},
-  config: { ODataService: '', Namespace: '' },
-  associations: {},
-};
-
-async function main() {
+async function readConfig(): Promise<Config> {
   try {
-    context.config = JSON.parse(await promises.readFile(configFilePath, 'utf-8'));
+    logger.info('Reading config from ' + configFilePath + '...');
+    return JSON.parse(await promises.readFile(configFilePath, 'utf-8'));
   } catch (err) {
-    console.error('Failed to read from ' + configFilePath);
+    logger.error('Failed to read from ' + configFilePath + ': ' + err.message);
     throw err;
   }
-
-  if (!context.config.ODataService) {
-    context.config.ODataService = 'c4codataapi';
-  }
-
-  if (!context.config.Namespace) {
-    context.config.Namespace = 'c4codata';
-  }
-
-  const f = await promises.readFile(sourceFilePath, { encoding: 'utf-8' });
-  const xml = await parseStringPromise(f);
-  const schemas = xml['edmx:Edmx']['edmx:DataServices'][0].Schema as Schema[];
-
-  schemas.forEach((schema) => {
-    schema.EntityType.forEach((entityType) => {
-      context.entityTypes[context.config.Namespace + '.' + entityType.$.Name] = entityType;
-    });
-
-    schema.EntityContainer.forEach((container) => {
-      container.EntitySet.forEach((entitySet) => {
-        context.entitySets[entitySet.$.Name] = entitySet;
-      });
-    });
-
-    schema.Association.forEach((association) => {
-      context.associations[context.config.Namespace + '.' + association.$.Name] = association;
-    });
-  });
-
-  const tmp = join(projectPath, 'tmp');
-  try {
-    await promises.mkdir(tmp);
-  } catch (err) {
-    // maybe exists alreadyu
-  }
-
-  await promises.writeFile(
-    tmp + '/entityTypes.json',
-    JSON.stringify(context.entityTypes, null, '\t')
-  );
-  await promises.writeFile(
-    tmp + '/entityCollections.json',
-    JSON.stringify(context.entitySets, null, '\t')
-  );
-
-  if (!context.config.EntitySets) return;
-
-  for (const name in context.config.EntitySets) {
-    await generateEntitySetConfig(context, name, outputDirectory);
-  }
-
-  await generateMetadataFile(context, outputDirectory);
 }
 
-main();
+async function readEdmxFile(name: string): Promise<ParsedEdmxFile> {
+  const edmxFilePath = join(configFilePathBase, name + '.edmx');
+  try {
+    logger.info(`Reading service ${name} definition from ${edmxFilePath}`);
+    const f = await promises.readFile(edmxFilePath, { encoding: 'utf-8' });
+    const xml = (await parseStringPromise(f)) as EdmxFile;
+    return parseEdmxFile(xml);
+  } catch (err) {
+    logger.error(`Failed to read ${edmxFilePath}: ${err.message} ${err.stack}`);
+    throw err;
+  }
+}
+
+async function main() {
+  logger.info(`================`);
+  logger.info(`    START`);
+  logger.info(`================`);
+  const config = await readConfig();
+  const services = Object.entries(config.services);
+  logger.info(
+    `Found ${services.length} services:${services
+      .map(([serviceName, serviceConfig]) => serviceName)
+      .join(', ')}`
+  );
+
+  try {
+    logger.info(`Target directory: ${outputDirectory}`);
+    await promises.mkdir(outputDirectory);
+  } catch (err) {
+    // maybe exists already
+  }
+
+  for (const [serviceName, serviceConfig] of services) {
+    logger.info(`Processing ${serviceName}`);
+    const targetFolderPath = join(outputDirectory, serviceName);
+    try {
+      await promises.mkdir(targetFolderPath);
+    } catch (err) {
+      // maybe exists already
+    }
+
+    try {
+      const edmxFile = await readEdmxFile(serviceName);
+      // await promises.writeFile(
+      //   targetFolderPath + '/edmx.tmp.json',
+      //   JSON.stringify(edmxFile, null, '\t')
+      // );
+
+      await processService(edmxFile, serviceConfig, targetFolderPath);
+    } catch (err) {
+      logger.error('Failed to process: ' + err.message);
+      logger.error(err.stackTrace());
+    }
+  }
+
+  logger.info(`================`);
+  logger.info(`     STOP`);
+  logger.info(`================`);
+}
+
+async function processService(
+  edmxFile: ParsedEdmxFile,
+  config: ODataServiceConfig,
+  targetFolderPath: string
+): Promise<void> {
+  logger.info(`================`);
+  logger.info(`Processing service ${config.baseUrl}`);
+  logger.info(`================`);
+
+  if (!config.entitySets) return;
+
+  for (const [entityName, entityConfig] of Object.entries(config.entitySets)) {
+    await generateEntitySet(edmxFile, entityName, entityConfig, targetFolderPath, config.baseUrl);
+  }
+
+  await generateMetadataFile(edmxFile, outputDirectory);
+}
+
+(async function () {
+  try {
+    await main();
+  } catch (err) {
+    console.error('Failed to process!');
+    console.error(err);
+  }
+})();

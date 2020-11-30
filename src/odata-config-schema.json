@@ -1,9 +1,10 @@
 {
   "$schema": "http://json-schema.org/schema",
-  "properties": {
-    "ODataService": { "type": "string" },
-    "Namespace": { "type": "string" },
-    "EntitySets": {
+  "definitions": {
+    "OperationType": {
+      "enum": ["fetch", "query"]
+    },
+    "EntitySetConfig": {
       "type": "object",
       "additionalProperties": {
         "properties": {
@@ -12,9 +13,7 @@
             "additionalProperties": {
               "type": "object",
               "properties": {
-                "type": {
-                  "enum": ["fetch", "query"]
-                },
+                "type": { "$ref": "#/definitions/OperationType" },
                 "properties": {
                   "type": "array",
                   "items": {
@@ -31,6 +30,34 @@
             }
           }
         }
+      }
+    },
+    "ServiceConfig": {
+      "type": "object",
+      "properties": {
+        "entitySets": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/EntitySetConfig"
+          }
+        },
+        "baseUrl": {
+          "type": "string"
+        }
+      },
+      "required": ["entitySets", "baseUrl"]
+    }
+  },
+  "properties": {
+    "generateTmpEdmxFile": {
+      "type": "boolean",
+      "default": "false"
+    },
+    "services": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "$ref": "#/definitions/ServiceConfig"
       }
     }
   }

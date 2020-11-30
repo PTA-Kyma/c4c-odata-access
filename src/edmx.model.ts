@@ -1,21 +1,44 @@
-export interface EntitySet {
-  $: { Name: string; EntityType: string };
+export interface EdmxFile {
+  'edmx:Edmx': {
+    'edmx:DataServices': {
+      Schema: EdmxSchema[];
+    }[];
+  };
 }
 
-export interface EntityType {
-  $: { Name: string };
-  Key: [{ PropertyRef: any }];
-  Property: Property[];
-  NavigationProperty: NavigationProperty[];
+export interface EdmxEntitySet {
+  $: {
+    Name: string;
+    EntityType: string;
+    'sap:creatable'?: 'true' | 'false';
+    'sap:updatable'?: 'true' | 'false';
+    'sap:deletable'?: 'true' | 'false';
+    'sap:semantics'?: string;
+    'sap:label'?: string;
+  };
 }
 
-export interface Property {
+export interface EdmxEntityType {
+  $: {
+    Name: string;
+    'c4c:parent-entity-type'?: string;
+  };
+  Key: [{ PropertyRef: { $: { Name: string } }[] }];
+  Property: EdmxProperty[];
+  NavigationProperty: EdmxNavigationProperty[];
+  $$: {
+    Namespace: string;
+  };
+}
+
+export interface EdmxProperty {
   $: {
     Name: string;
     Type: string;
     Nullable: 'true' | 'false';
     MaxLength?: string;
     Precision?: string;
+    Scale?: string;
     FixedLength?: 'true' | 'false';
     'sap:creatable': 'true' | 'false';
     'sap:updatable': 'true' | 'false';
@@ -23,10 +46,12 @@ export interface Property {
     'sap:display-format'?: string;
     'sap:text'?: string;
     'c4c:value-help'?: string;
+    'sap:label'?: string;
+    'c4c:context-property'?: string;
   };
 }
 
-export interface NavigationProperty {
+export interface EdmxNavigationProperty {
   $: {
     Name: string;
     Relationship: string;
@@ -35,28 +60,29 @@ export interface NavigationProperty {
   };
 }
 
-export interface Schema {
-  EntityContainer: { EntitySet: EntitySet[] }[];
-  EntityType: EntityType[];
-  ComplexType: ComplexType[];
-  Association: Association[];
+export interface EdmxSchema {
+  $: { Namespace: string };
+  EntityContainer: { EntitySet: EdmxEntitySet[] }[];
+  EntityType: EdmxEntityType[];
+  ComplexType: EdmxComplexType[];
+  Association: EdmxAssociation[];
 }
 
-export interface ComplexType {
+export interface EdmxComplexType {
   $: {
     Name: string;
   };
-  Property: Property[];
+  Property: EdmxProperty[];
 }
 
-export interface Association {
+export interface EdmxAssociation {
   $: {
     Name: string;
   };
-  End: AssociationEnd[];
+  End: EdmxAssociationEnd[];
 }
 
-export interface AssociationEnd {
+export interface EdmxAssociationEnd {
   $: {
     Type: string;
     Multiplicity: '1' | '*';

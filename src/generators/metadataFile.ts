@@ -1,13 +1,13 @@
-import { Context } from '../context';
 import { promises } from 'fs';
+import { ParsedEdmxFile } from '../parseEdmxFile';
 
 export async function generateMetadataFile(
-  context: Context,
+  edmx: ParsedEdmxFile,
   outputDirectory: string
 ): Promise<void> {
   const outputLines = [];
   outputLines.push('export const metadata = {');
-  for (const entityType of Object.values(context.entityTypes)) {
+  for (const entityType of Object.values(edmx.entityTypes)) {
     outputLines.push(entityType.$.Name + ': {');
     outputLines.push('    Properties : {');
     entityType.Property.forEach((p) => {
@@ -25,8 +25,5 @@ export async function generateMetadataFile(
   }
   outputLines.push('}');
 
-  await promises.writeFile(
-    outputDirectory + '/' + context.config.ODataService + '.metadata.ts',
-    outputLines.join('\r\n')
-  );
+  await promises.writeFile(outputDirectory + '/metadata.ts', outputLines.join('\r\n'));
 }

@@ -1,13 +1,13 @@
-import { Context } from '../context';
-import { EntityType } from '../edmx.model';
+import { EdmxEntityType } from '../edmx.model';
 import { TypescriptOperationConfig } from '../config.model';
+import { ParsedEdmxFile } from '../parseEdmxFile';
 
 export function generateEntityRepresentation(
   outputLines: string[],
   operation: TypescriptOperationConfig,
   operationName: string,
-  entityType: EntityType,
-  context: Context
+  entityType: EdmxEntityType,
+  edmx: ParsedEdmxFile
 ) {
   const expandedProperties: {
     name: string;
@@ -26,8 +26,8 @@ export function generateEntityRepresentation(
         );
       }
 
-      const childEntityTypeName = context.config.Namespace + '.' + navigationProperty.$.ToRole;
-      const childEntityType = context.entityTypes[childEntityTypeName];
+      const childEntityTypeName = entityType.$$.Namespace + '.' + navigationProperty.$.ToRole;
+      const childEntityType = edmx.entityTypes[childEntityTypeName];
       if (!childEntityType) {
         throw new Error(
           `Target EntityType ${childEntityTypeName} not found for NavigationProperty ${navigationPropertyName} on entity type ${entityType.$.Name}`
@@ -44,7 +44,7 @@ export function generateEntityRepresentation(
       });
       outputLines.push('}');
 
-      const association = context.associations[navigationProperty.$.Relationship];
+      const association = edmx.associations[navigationProperty.$.Relationship];
       if (!association) {
         throw new Error(`No association ${navigationProperty.$.Relationship}`);
       }
@@ -59,8 +59,6 @@ export function generateEntityRepresentation(
         singleOrArray: associationEnd.$.Multiplicity === '1' ? 'single' : 'array',
       });
     });
-
-    console.log(entityType.NavigationProperty);
   }
 
   outputLines.push(`export interface ${operation.entityName} {`);
