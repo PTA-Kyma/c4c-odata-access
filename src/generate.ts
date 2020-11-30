@@ -4,6 +4,7 @@ import winston, { createLogger, format } from 'winston';
 import { parseStringPromise } from 'xml2js';
 import { Config, ODataServiceConfig } from './config.model';
 import { EdmxFile } from './edmx.model';
+import { generateCodelists } from './generators/codeLists';
 import { generateEntitySet } from './generators/entitySet';
 import { generateMetadataFile } from './generators/metadataFile';
 import { parseEdmxFile, ParsedEdmxFile } from './parseEdmxFile';
@@ -104,7 +105,7 @@ async function main() {
 }
 
 async function processService(
-  edmxFile: ParsedEdmxFile,
+  edmx: ParsedEdmxFile,
   config: ODataServiceConfig,
   targetFolderPath: string
 ): Promise<void> {
@@ -114,11 +115,30 @@ async function processService(
 
   if (!config.entitySets) return;
 
+  const context: ServiceGenerationContext = {
+    edmx,
+    targetFolderPath,
+    baseUrl: config.baseUrl,
+    codeLists: {},
+  };
+
   for (const [entityName, entityConfig] of Object.entries(config.entitySets)) {
-    await generateEntitySet(edmxFile, entityName, entityConfig, targetFolderPath, config.baseUrl);
+    await generateEntitySet(context, entityName, entityConfig);
   }
 
-  await generateMetadataFile(edmxFile, outputDirectory);
+  await generateCodelists(context);
+  await generateMetadataFile(edmx, targetFolderPath);
+}
+
+export interface ServiceGenerationContext {
+  edmx: ParsedEdmxFile;
+  targetFolderPath: string;
+  baseUrl: string;
+  codeLists: CodeLists;
+}
+
+export interface CodeLists {
+  [entityModelName: string]: { [propertyName: string]: string };
 }
 
 (async function () {

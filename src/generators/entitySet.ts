@@ -1,23 +1,27 @@
 import { promises } from 'fs';
-import { logger } from '../generate';
-import { defaultOperations, EntitySetConfig, setupDefaultsWhereMissing } from '../config.model';
+import { CodeLists, logger, ServiceGenerationContext } from '../generate';
+import {
+  defaultOperations,
+  EntitySetConfig,
+  setupDefaultsWhereMissing,
+  TypescriptOperationConfig,
+} from '../config.model';
 import { generateEntityRepresentation } from '../generators/entityRepresentation';
 import { ParsedEdmxFile } from '../parseEdmxFile';
+import { EdmxEntitySet, EdmxEntityType } from '../edmx.model';
 
 export async function generateEntitySet(
-  edmx: ParsedEdmxFile,
+  context: ServiceGenerationContext,
   entitySetName: string,
-  entitySetConfig: EntitySetConfig,
-  outputDirectory: string,
-  serviceUrl: string
+  entitySetConfig: EntitySetConfig
 ): Promise<void> {
-  const entitySet = edmx.entitySets[entitySetName];
+  const entitySet = context.edmx.entitySets[entitySetName];
   if (!entitySet) {
     logger.error('No EntitySet ' + entitySetName);
     return;
   }
 
-  const entityType = edmx.entityTypes[entitySet.$.EntityType];
+  const entityType = context.edmx.entityTypes[entitySet.$.EntityType];
   if (!entityType) {
     logger.error(`No EntityType ${entitySet.$.EntityType} for EntitySet ${entitySetName}`);
     return;
@@ -51,7 +55,7 @@ export async function generateEntitySet(
         filter = '$top=20';
     }
 
-    const base = '${serviceUrl}/${entitySetName}';
+    const base = '${context.baseUrl}/${entitySetName}';
     const select = '${
       e.onlySelectedProperties ? '$select=' + e.properties.concat(e.expand || []).join(',') : ''
     }';
@@ -67,7 +71,7 @@ export async function generateEntitySet(
         case 'fetch':
           outputLines.push(`
    ${operationName}(service: ODataService, objectID: string): Promise<${e.entityName}> {
-    const base = "${serviceUrl}/${entitySet.$.Name}('" + objectID + "')";
+    const base = "${context.baseUrl}/${entitySet.$.Name}('" + objectID + "')";
     const select = '${
       e.onlySelectedProperties ? '$select=' + e.properties.concat(e.expand || []).join(',') : ''
     }';
@@ -80,12 +84,8 @@ export async function generateEntitySet(
           break;
 
         case 'update':
-          outputLines.push(`
-   ${operationName}(service: ODataService, objectID: string, object: ${e.entityName}): Promise<any> {   
-    const url = "${serviceUrl}/${entitySet.$.Name}('" + objectID + "')";    
-    return service.patch<${e.entityName}>(url, obj);
-  },
-`);
+          generateUpdate(outputLines, operationName, context, e, entitySet);
+
           break;
         default:
           throw new Error('Not supported operation ' + e.type);
@@ -95,14 +95,41 @@ export async function generateEntitySet(
     outputLines.push('}\r\n');
 
     Object.entries(entitySetConfig.operations).forEach(([operationName, operation]) => {
-      generateEntityRepresentation(outputLines, operation, operationName, entityType, edmx);
+      generateEntityRepresentation(outputLines, operation, operationName, entityType, context.edmx);
     });
 
-    const outputFile = await promises.open(`${outputDirectory}/${entitySetName}.ts`, 'w');
+    const outputFile = await promises.open(`${context.targetFolderPath}/${entitySetName}.ts`, 'w');
     await outputFile.writeFile(outputLines.join('\r\n'));
     await outputFile.close();
   } catch (err) {
     logger.error(`Failed to process  ${entitySetName}: ${err.message}`);
   } finally {
   }
+}
+
+function generateUpdate(
+  outputLines: string[],
+  operationName: string,
+  context: ServiceGenerationContext,
+  e: TypescriptOperationConfig,
+  entitySet: EdmxEntitySet
+): void {
+  outputLines.push(`
+   ${operationName}(service: ODataService, objectID: string, obj: ${e.entityName}): Promise<any> {   
+    const url = "${context.baseUrl}/${entitySet.$.Name}('" + objectID + "')";    
+    return service.patch<${e.entityName}>(url, obj);
+  },
+`);
+
+  const codeLists: { [propertyName: string]: string } = {};
+  context.codeLists[e.entityName] = codeLists;
+  const entityType = context.edmx.entityTypes[entitySet.$.EntityType];
+  entityType.Property.filter(
+    (p) =>
+      p.$['sap:updatable'] === 'true' &&
+      p.$['c4c:value-help'] &&
+      (!e.properties || e.properties.includes(p.$.Name))
+  ).forEach((p) => {
+    codeLists[p.$.Name] = p.$['c4c:value-help'];
+  });
 }
