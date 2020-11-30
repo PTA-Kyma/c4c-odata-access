@@ -43,6 +43,20 @@ export class C4CService implements ODataService {
     });
   }
 
+  async patch<T>(text: string, obj: T): Promise<any> {
+    const url = '/sap/c4c/odata/v1/' + text;
+    if (this.debugLogger) this.debugLogger('Sending PATCH ' + url);
+    const result = await this.axios.patch<ODataQueryResult<T>>(url, obj);
+    return result.data;
+  }
+
+  async post<T>(text: string, obj: T): Promise<any> {
+    const url = '/sap/c4c/odata/v1/' + text;
+    if (this.debugLogger) this.debugLogger('Sending POST ' + url);
+    const result = await this.axios.post<ODataQueryResult<T>>(url, obj);
+    return result.data;
+  }
+
   async query<T>(text: string): Promise<T> {
     const url = '/sap/c4c/odata/v1/' + text;
     if (this.debugLogger) this.debugLogger('Querying ' + url);

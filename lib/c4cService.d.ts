@@ -15,6 +15,8 @@ export declare class C4CService implements ODataService {
     axios: AxiosInstance;
     debugLogger: (string: any) => void;
     constructor(credentials: UsernamePasswordCredentials | BearerTokenCredentials);
+    patch<T>(text: string, obj: T): Promise<any>;
+    post<T>(text: string, obj: T): Promise<any>;
     query<T>(text: string): Promise<T>;
 }
 //# sourceMappingURL=c4cService.d.ts.map

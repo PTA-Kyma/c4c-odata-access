@@ -68,8 +68,15 @@ export function setupDefaultsWhereMissing(
         case 'fetch':
           o.properties = entityType.Property.map((p) => p.$.Name);
           break;
+        case 'update':
+          o.properties = entityType.Property.filter((p) => p.$['sap:updatable'] === 'true').map(
+            (p) => p.$.Name
+          );
+          break;
         default:
-          throw new Error('Not implemented yet');
+          throw new Error(
+            `setupDefaultsWhereMissing: Setting defaults for ${o.type} operation '${name}' not implemented yet `
+          );
       }
     }
   });

@@ -1,9 +1,6 @@
 {
   "$schema": "http://json-schema.org/schema",
   "definitions": {
-    "OperationType": {
-      "enum": ["fetch", "query"]
-    },
     "EntitySetConfig": {
       "type": "object",
       "additionalProperties": {
@@ -13,7 +10,10 @@
             "additionalProperties": {
               "type": "object",
               "properties": {
-                "type": { "$ref": "#/definitions/OperationType" },
+                "type": {
+                  "type": "string",
+                  "enum": ["fetch", "query"]
+                },
                 "properties": {
                   "type": "array",
                   "items": {

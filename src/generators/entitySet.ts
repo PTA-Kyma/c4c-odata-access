@@ -23,12 +23,19 @@ export async function generateEntitySet(
     return;
   }
 
-  logger.info('Generating EntitySet ' + entitySetName);
+  logger.info('Generating EntitySet: ' + entitySetName);
   try {
     const outputLines = ["import { ODataService } from '@pta-kyma/c4c-odata-access';\r\n"];
     if (!entitySetConfig.operations) {
       entitySetConfig.operations = defaultOperations(entityType);
     }
+
+    logger.info(
+      '  operations: ' +
+        Object.entries(entitySetConfig.operations)
+          .map(([name, op]) => `${name} (${op.type})`)
+          .join(', ')
+    );
 
     setupDefaultsWhereMissing(entitySetName, entityType, entitySetConfig.operations);
 
@@ -38,44 +45,47 @@ export async function generateEntitySet(
 
       switch (e.type) {
         case 'query':
-          outputLines.push(
-            `${operationName}(service: ODataService, filter?: string): Promise<${e.entityName}[]> {`
-          );
-          outputLines.push("if (filter === undefined) filter = '$top=20'");
+          outputLines.push(`
+   ${operationName}(service: ODataService, filter?: string): Promise<${e.entityName}[]> {
+    if (filter === undefined) {
+        filter = '$top=20';
+    }
 
-          outputLines.push(`const base = '${serviceUrl}/${entitySetName}';`);
-          outputLines.push(
-            `const select = '${
-              e.onlySelectedProperties
-                ? '$select=' + e.properties.concat(e.expand || []).join(',')
-                : ''
-            }';`
-          );
-          outputLines.push(`const expand = '${expand}';`);
-          outputLines.push(`const query = base + '?' + select + expand + '&' + filter`);
+    const base = '${serviceUrl}/${entitySetName}';
+    const select = '${
+      e.onlySelectedProperties ? '$select=' + e.properties.concat(e.expand || []).join(',') : ''
+    }';
 
-          outputLines.push(`return service.query<${e.entityName}[]>(query);`);
-          outputLines.push('},\r\n');
+    const expand = '${expand}';
+    const query = base + '?' + select + expand + '&' + filter;
+   
+    return service.query<${e.entityName}[]>(query);
+  },
+`);
           break;
 
         case 'fetch':
-          outputLines.push(
-            `${operationName}(service: ODataService, objectID: string): Promise<${e.entityName}> {`
-          );
+          outputLines.push(`
+   ${operationName}(service: ODataService, objectID: string): Promise<${e.entityName}> {
+    const base = "${serviceUrl}/${entitySet.$.Name}('" + objectID + "')";
+    const select = '${
+      e.onlySelectedProperties ? '$select=' + e.properties.concat(e.expand || []).join(',') : ''
+    }';
+    const expand = '${expand}';
+    const query = base + '?' + select + expand;
 
-          outputLines.push(`const base = "${serviceUrl}/${entitySet.$.Name}('" + objectID + "')";`);
-          outputLines.push(
-            `const select = '${
-              e.onlySelectedProperties
-                ? '$select=' + e.properties.concat(e.expand || []).join(',')
-                : ''
-            }';`
-          );
-          outputLines.push(`const expand = '${expand}';`);
+    return service.query<${e.entityName}>(query);
+  },
+`);
+          break;
 
-          outputLines.push(`const query = base + '?' + select + expand;`);
-          outputLines.push(`return service.query<${e.entityName}>(query);`);
-          outputLines.push('},\r\n');
+        case 'update':
+          outputLines.push(`
+   ${operationName}(service: ODataService, objectID: string, object: ${e.entityName}): Promise<any> {   
+    const url = "${serviceUrl}/${entitySet.$.Name}('" + objectID + "')";    
+    return service.patch<${e.entityName}>(url, obj);
+  },
+`);
           break;
         default:
           throw new Error('Not supported operation ' + e.type);
