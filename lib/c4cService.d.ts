@@ -15,7 +15,7 @@ export declare class C4CService implements ODataService {
     axios: AxiosInstance;
     debugLogger: (string: any) => void;
     constructor(credentials: UsernamePasswordCredentials | BearerTokenCredentials);
-    ensureCsrfToken(): Promise<any>;
+    ensureCsrfToken(text: string): Promise<any>;
     patch<T>(text: string, obj: T): Promise<any>;
     post<T>(text: string, obj: T): Promise<any>;
     query<T>(text: string): Promise<T>;

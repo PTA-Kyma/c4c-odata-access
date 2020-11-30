@@ -44,15 +44,16 @@ export class C4CService implements ODataService {
     });
   }
 
-  async ensureCsrfToken(): Promise<any> {
+  async ensureCsrfToken(text: string): Promise<any> {
     if (this.axios.defaults.headers['X-CSRF-Token'] === 'fetch') {
       this.debugLogger('No X-CSRF-Token!');
-      throw new Error('No CSRD');
+      await this.query(text);
+      this.debugLogger('CSRF-Token received: ' + this.axios.defaults.headers['X-CSRF-Token']);
     }
   }
 
   async patch<T>(text: string, obj: T): Promise<any> {
-    await this.ensureCsrfToken();
+    await this.ensureCsrfToken(text);
 
     const url = '/sap/c4c/odata/v1/' + text;
     if (this.debugLogger) this.debugLogger('Sending PATCH ' + url);
@@ -61,7 +62,7 @@ export class C4CService implements ODataService {
   }
 
   async post<T>(text: string, obj: T): Promise<any> {
-    await this.ensureCsrfToken();
+    await this.ensureCsrfToken(text);
 
     const url = '/sap/c4c/odata/v1/' + text;
     if (this.debugLogger) this.debugLogger('Sending POST ' + url);
