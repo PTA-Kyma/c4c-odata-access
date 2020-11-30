@@ -1,4 +1,4 @@
+import { ServiceGenerationContext } from '../generate';
 import { EntitySetConfig } from '../config.model';
-import { ParsedEdmxFile } from '../parseEdmxFile';
-export declare function generateEntitySet(edmx: ParsedEdmxFile, entitySetName: string, entitySetConfig: EntitySetConfig, outputDirectory: string, serviceUrl: string): Promise<void>;
+export declare function generateEntitySet(context: ServiceGenerationContext, entitySetName: string, entitySetConfig: EntitySetConfig): Promise<void>;
 //# sourceMappingURL=entitySet.d.ts.map

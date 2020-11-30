@@ -39,11 +39,21 @@ export class C4CService implements ODataService {
       baseURL: credentials.url,
       headers: {
         Authorization: createAuthorizationHeader(credentials),
+        'X-CSRF-Token': 'fetch',
       },
     });
   }
 
+  async ensureCsrfToken(): Promise<any> {
+    if (this.axios.defaults.headers['X-CSRF-Token'] === 'fetch') {
+      this.debugLogger('No X-CSRF-Token!');
+      throw new Error('No CSRD');
+    }
+  }
+
   async patch<T>(text: string, obj: T): Promise<any> {
+    await this.ensureCsrfToken();
+
     const url = '/sap/c4c/odata/v1/' + text;
     if (this.debugLogger) this.debugLogger('Sending PATCH ' + url);
     const result = await this.axios.patch<ODataQueryResult<T>>(url, obj);
@@ -51,6 +61,8 @@ export class C4CService implements ODataService {
   }
 
   async post<T>(text: string, obj: T): Promise<any> {
+    await this.ensureCsrfToken();
+
     const url = '/sap/c4c/odata/v1/' + text;
     if (this.debugLogger) this.debugLogger('Sending POST ' + url);
     const result = await this.axios.post<ODataQueryResult<T>>(url, obj);
@@ -61,6 +73,7 @@ export class C4CService implements ODataService {
     const url = '/sap/c4c/odata/v1/' + text;
     if (this.debugLogger) this.debugLogger('Querying ' + url);
     const result = await this.axios.get<ODataQueryResult<T>>(url);
+    this.axios.defaults.headers['X-CSRF-Token'] = result.headers['X-CSRF-Token'];
     return result.data?.d?.results;
   }
 }
