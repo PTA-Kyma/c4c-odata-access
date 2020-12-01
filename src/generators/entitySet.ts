@@ -50,7 +50,9 @@ export async function generateEntitySet(
       switch (e.type) {
         case 'query':
           outputLines.push(`
-   ${operationName}(service: ODataService, filter?: string): Promise<${e.entityName}[]> {
+   ${operationName}(service: ODataService, filter?: string, logger?: DebugLogger): Promise<${
+            e.entityName
+          }[]> {
     if (filter === undefined) {
         filter = '$top=20';
     }
@@ -63,14 +65,16 @@ export async function generateEntitySet(
     const expand = '${expand}';
     const query = base + '?' + select + expand + '&' + filter;
    
-    return service.query<${e.entityName}[]>(query);
+    return service.query<${e.entityName}[]>(query, logger);
   },
 `);
           break;
 
         case 'fetch':
           outputLines.push(`
-   ${operationName}(service: ODataService, objectID: string): Promise<${e.entityName}> {
+   ${operationName}(service: ODataService, objectID: string, logger?: DebugLogger): Promise<${
+            e.entityName
+          }> {
     const base = "${context.baseUrl}/${entitySet.$.Name}('" + objectID + "')";
     const select = '${
       e.onlySelectedProperties ? '$select=' + e.properties.concat(e.expand || []).join(',') : ''
@@ -78,7 +82,7 @@ export async function generateEntitySet(
     const expand = '${expand}';
     const query = base + '?' + select + expand;
 
-    return service.query<${e.entityName}>(query);
+    return service.query<${e.entityName}>(query, logger);
   },
 `);
           break;
@@ -115,9 +119,9 @@ function generateUpdate(
   entitySet: EdmxEntitySet
 ): void {
   outputLines.push(`
-   ${operationName}(service: ODataService, objectID: string, obj: ${e.entityName}): Promise<any> {   
+   ${operationName}(service: ODataService, objectID: string, obj: ${e.entityName}, logger?: DebugLogger): Promise<any> {   
     const url = "${context.baseUrl}/${entitySet.$.Name}('" + objectID + "')";    
-    return service.patch<${e.entityName}>(url, obj);
+    return service.patch<${e.entityName}>(url, obj, logger);
   },
 `);
 
