@@ -3,28 +3,26 @@
   "definitions": {
     "EntitySetConfig": {
       "type": "object",
-      "additionalProperties": {
-        "properties": {
-          "operations": {
+      "properties": {
+        "operations": {
+          "type": "object",
+          "additionalProperties": {
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["fetch", "query", "create", "update"]
+              },
               "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": ["fetch", "query"]
-                },
-                "properties": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "expand": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "expand": {
+                "type": "array",
+                "items": {
+                  "type": "string"
                 }
               }
             }

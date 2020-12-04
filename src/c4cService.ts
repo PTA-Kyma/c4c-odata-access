@@ -1,4 +1,6 @@
-import Axios, { AxiosInstance } from 'axios';
+import Axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axiosCookieJarSupport from 'axios-cookiejar-support';
+import { CookieJar } from 'tough-cookie';
 import { ODataService } from './odataService';
 
 export interface UsernamePasswordCredentials {
@@ -31,50 +33,95 @@ function createAuthorizationHeader(
 
 export class C4CService implements ODataService {
   axios: AxiosInstance;
-
-  debugLogger: (string) => void;
+  csrfToken: string;
 
   constructor(credentials: UsernamePasswordCredentials | BearerTokenCredentials) {
+    const jar = new CookieJar();
     this.axios = Axios.create({
       baseURL: credentials.url,
       headers: {
         Authorization: createAuthorizationHeader(credentials),
-        'X-CSRF-Token': 'fetch',
+        Connection: 'keep-alive',
       },
+      withCredentials: true,
+      jar,
     });
+
+    axiosCookieJarSupport(this.axios);
   }
 
-  async ensureCsrfToken(text: string): Promise<any> {
-    if (this.axios.defaults.headers['X-CSRF-Token'] === 'fetch') {
-      this.debugLogger('No X-CSRF-Token!');
+  async ensureCsrfToken(text: string, logger?: (string) => void): Promise<any> {
+    if (!this.csrfToken) {
+      if (logger) {
+        logger('No X-CSRF-Token! Performing query...');
+      }
       await this.query(text);
-      this.debugLogger('CSRF-Token received: ' + this.axios.defaults.headers['X-CSRF-Token']);
     }
   }
 
-  async patch<T>(text: string, obj: T): Promise<any> {
-    await this.ensureCsrfToken(text);
+  async patch<T>(text: string, obj: T, logger?: (string) => void): Promise<any> {
+    await this.ensureCsrfToken(text, logger);
 
     const url = '/sap/c4c/odata/v1/' + text;
-    if (this.debugLogger) this.debugLogger('Sending PATCH ' + url);
-    const result = await this.axios.patch<ODataQueryResult<T>>(url, obj);
+    if (logger) {
+      logger('Sending PATCH ' + url);
+    }
+
+    const result = await this.axios.patch<ODataQueryResult<T>>(url, obj, {
+      headers: { 'X-CSRF-Token': this.csrfToken },
+      withCredentials: true,
+    });
+
+    if (logger) {
+      logger(`PATCH returned status ${result.status} ${result.statusText}`);
+    }
+
     return result.data;
   }
 
-  async post<T>(text: string, obj: T): Promise<any> {
-    await this.ensureCsrfToken(text);
+  async post<T>(text: string, obj: T, logger?: (string) => void): Promise<any> {
+    await this.ensureCsrfToken(text, logger);
 
     const url = '/sap/c4c/odata/v1/' + text;
-    if (this.debugLogger) this.debugLogger('Sending POST ' + url);
-    const result = await this.axios.post<ODataQueryResult<T>>(url, obj);
+    if (logger) {
+      logger('Sending POST ' + url);
+    }
+    const result = await this.axios.post<ODataQueryResult<T>>(url, obj, {
+      headers: { 'X-CSRF-Token': this.csrfToken },
+      withCredentials: true,
+    });
+
+    if (logger) {
+      logger(`POST returned status ${result.status} ${result.statusText}`);
+    }
+
     return result.data;
   }
 
-  async query<T>(text: string): Promise<T> {
+  async query<T>(text: string, logger?: (string) => void): Promise<T> {
     const url = '/sap/c4c/odata/v1/' + text;
-    if (this.debugLogger) this.debugLogger('Querying ' + url);
-    const result = await this.axios.get<ODataQueryResult<T>>(url);
-    this.axios.defaults.headers['X-CSRF-Token'] = result.headers['X-CSRF-Token'];
+    if (logger) {
+      logger('Querying ' + url);
+    }
+
+    const options: AxiosRequestConfig = { headers: {}, withCredentials: true };
+    if (!this.csrfToken) {
+      options.headers['X-CSRF-Token'] = 'fetch';
+    }
+
+    const result = await this.axios.get<ODataQueryResult<T>>(url, options);
+
+    if (logger) {
+      logger(`Query returned status ${result.status} ${result.statusText}`);
+    }
+
+    const newCsrfToken = result.headers['x-csrf-token'];
+    if (newCsrfToken) {
+      this.csrfToken = newCsrfToken;
+      if (logger) {
+        logger('New CSRF Token: ' + this.csrfToken);
+      }
+    }
     return result.data?.d?.results;
   }
 }

@@ -73,6 +73,11 @@ export function setupDefaultsWhereMissing(
             (p) => p.$.Name
           );
           break;
+        case 'create':
+          o.properties = entityType.Property.filter((p) => p.$['sap:creatable'] === 'true').map(
+            (p) => p.$.Name
+          );
+          break;
         default:
           throw new Error(
             `setupDefaultsWhereMissing: Setting defaults for ${o.type} operation '${name}' not implemented yet `

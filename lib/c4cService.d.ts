@@ -13,11 +13,11 @@ export interface BearerTokenCredentials {
 }
 export declare class C4CService implements ODataService {
     axios: AxiosInstance;
-    debugLogger: (string: any) => void;
+    csrfToken: string;
     constructor(credentials: UsernamePasswordCredentials | BearerTokenCredentials);
-    ensureCsrfToken(text: string): Promise<any>;
-    patch<T>(text: string, obj: T): Promise<any>;
-    post<T>(text: string, obj: T): Promise<any>;
-    query<T>(text: string): Promise<T>;
+    ensureCsrfToken(text: string, logger?: (string: any) => void): Promise<any>;
+    patch<T>(text: string, obj: T, logger?: (string: any) => void): Promise<any>;
+    post<T>(text: string, obj: T, logger?: (string: any) => void): Promise<any>;
+    query<T>(text: string, logger?: (string: any) => void): Promise<T>;
 }
 //# sourceMappingURL=c4cService.d.ts.map

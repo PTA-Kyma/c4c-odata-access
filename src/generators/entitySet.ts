@@ -30,7 +30,9 @@ export async function generateEntitySet(
   logger.info('Generating EntitySet: ' + entitySetName);
   try {
     const outputLines = [
-      "import { ODataService, DebugLogger } from '@pta-kyma/c4c-odata-access';\r\n",
+      "import { ODataService } from '@pta-kyma/c4c-odata-access';",
+      "import { DebugLogger } from '@pta-kyma/c4c-odata-access/lib/odataService';",
+      '',
     ];
     if (!entitySetConfig.operations) {
       entitySetConfig.operations = defaultOperations(entityType);
@@ -89,6 +91,11 @@ export async function generateEntitySet(
 `);
           break;
 
+        case 'create':
+          generateCreate(outputLines, operationName, context, e, entitySet);
+
+          break;
+
         case 'update':
           generateUpdate(outputLines, operationName, context, e, entitySet);
 
@@ -111,6 +118,33 @@ export async function generateEntitySet(
     logger.error(`Failed to process  ${entitySetName}: ${err.message}`);
   } finally {
   }
+}
+
+function generateCreate(
+  outputLines: string[],
+  operationName: string,
+  context: ServiceGenerationContext,
+  e: TypescriptOperationConfig,
+  entitySet: EdmxEntitySet
+): void {
+  outputLines.push(`
+   ${operationName}(service: ODataService, obj: ${e.entityName}, logger?: DebugLogger): Promise<any> {   
+    const url = "${context.baseUrl}/${entitySet.$.Name}";    
+    return service.post<${e.entityName}>(url, obj, logger);
+  },
+`);
+
+  const codeLists: { [propertyName: string]: string } = {};
+  context.codeLists[e.entityName] = codeLists;
+  const entityType = context.edmx.entityTypes[entitySet.$.EntityType];
+  entityType.Property.filter(
+    (p) =>
+      p.$['sap:creatable'] === 'true' &&
+      p.$['c4c:value-help'] &&
+      (!e.properties || e.properties.includes(p.$.Name))
+  ).forEach((p) => {
+    codeLists[p.$.Name] = p.$['c4c:value-help'];
+  });
 }
 
 function generateUpdate(

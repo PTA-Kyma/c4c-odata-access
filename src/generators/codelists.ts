@@ -9,7 +9,7 @@ export async function generateCodelists(context: ServiceGenerationContext): Prom
   Object.entries(context.codeLists).forEach(([entityName, properties]) => {
     outputLines.push(` ${entityName}: {`);
     Object.entries(properties).forEach(([propertyName, codelist]) => {
-      outputLines.push(`  '${propertyName}': '${codelist}', `);
+      outputLines.push(`  '${propertyName}': '${context.baseUrl}/${codelist}', `);
     });
     outputLines.push(` },`);
   });
