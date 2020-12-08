@@ -1,12 +1,11 @@
 import { DebugLogger, ODataService } from './main';
 
 export class CodelistService {
-  private cache: { [name: string]: Promise<CodelistEntry[]> } = {};
-  constructor(private odataService: ODataService, private useCache: boolean = true) {}
+  constructor(private odataService: ODataService, private cache: CodelistCache = null) {}
 
   public getCodeList(codeListFullUrl: string, logger?: DebugLogger): Promise<CodelistEntry[]> {
     let entriesPromise: Promise<CodelistEntry[]> = null;
-    if (this.useCache) {
+    if (this.cache) {
       entriesPromise = this.cache[codeListFullUrl];
       if (entriesPromise) {
         return entriesPromise;
@@ -20,7 +19,7 @@ export class CodelistService {
         (list || []).map((ce) => ({ Code: ce.Code, Description: ce.Description } as CodelistEntry))
       );
 
-    if (this.useCache) {
+    if (this.cache) {
       this.cache[codeListFullUrl] = entriesPromise;
     }
 
@@ -31,4 +30,8 @@ export class CodelistService {
 export interface CodelistEntry {
   Code: string;
   Description: string;
+}
+
+export interface CodelistCache {
+  [name: string]: Promise<CodelistEntry[]>;
 }
