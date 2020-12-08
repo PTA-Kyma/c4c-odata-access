@@ -1,5 +1,5 @@
 import { ODataService, DebugLogger } from './odataService';
-import { CodelistService, CodelistEntry } from './codelistService';
+import { CodelistService, CodelistEntry, CodelistCache } from './codelistService';
 import { parseDate } from './odataHelpers';
 import {
   C4CService,
@@ -14,5 +14,6 @@ export {
   PseudoBearerTokenCredentials,
   CodelistEntry,
   CodelistService,
+  CodelistCache,
   DebugLogger,
 };
