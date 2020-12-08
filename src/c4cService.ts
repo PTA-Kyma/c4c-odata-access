@@ -10,18 +10,18 @@ export interface UsernamePasswordCredentials {
   password: string;
 }
 
-export interface BearerTokenCredentials {
-  kind: 'bearer';
+export interface PseudoBearerTokenCredentials {
+  kind: 'pseudobearer';
   url: string;
   token: string;
 }
 
 function createAuthorizationHeader(
-  credentials: UsernamePasswordCredentials | BearerTokenCredentials
+  credentials: UsernamePasswordCredentials | PseudoBearerTokenCredentials
 ): string {
   switch (credentials.kind) {
-    case 'bearer':
-      return 'Bearer ' + credentials.token;
+    case 'pseudobearer':
+      return 'Basic ' + credentials.token;
     case 'password':
       return (
         'Basic ' + Buffer.from(credentials.username + ':' + credentials.password).toString('base64')
@@ -35,7 +35,7 @@ export class C4CService implements ODataService {
   axios: AxiosInstance;
   csrfToken: string;
 
-  constructor(credentials: UsernamePasswordCredentials | BearerTokenCredentials) {
+  constructor(credentials: UsernamePasswordCredentials | PseudoBearerTokenCredentials) {
     const jar = new CookieJar();
     this.axios = Axios.create({
       baseURL: credentials.url,

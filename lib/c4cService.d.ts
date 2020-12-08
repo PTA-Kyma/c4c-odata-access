@@ -6,15 +6,15 @@ export interface UsernamePasswordCredentials {
     username: string;
     password: string;
 }
-export interface BearerTokenCredentials {
-    kind: 'bearer';
+export interface PseudoBearerTokenCredentials {
+    kind: 'pseudobearer';
     url: string;
     token: string;
 }
 export declare class C4CService implements ODataService {
     axios: AxiosInstance;
     csrfToken: string;
-    constructor(credentials: UsernamePasswordCredentials | BearerTokenCredentials);
+    constructor(credentials: UsernamePasswordCredentials | PseudoBearerTokenCredentials);
     ensureCsrfToken(text: string, logger?: (string: any) => void): Promise<any>;
     patch<T>(text: string, obj: T, logger?: (string: any) => void): Promise<any>;
     post<T>(text: string, obj: T, logger?: (string: any) => void): Promise<any>;
