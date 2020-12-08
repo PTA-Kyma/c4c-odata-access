@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/winston": "^2.4.4",
     "axios": "^0.20.0",
     "axios-cookiejar-support": "^1.0.1",
     "tough-cookie": "^4.0.0",
