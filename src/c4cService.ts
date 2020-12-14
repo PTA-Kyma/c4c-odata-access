@@ -62,7 +62,7 @@ export class C4CService implements ODataService {
   async patch<T>(text: string, obj: T, logger?: (string) => void): Promise<any> {
     await this.ensureCsrfToken(text, logger);
 
-    const url = '/sap/c4c/odata/v1/' + text;
+    const url = '/sap/c4c/odata/' + text;
     if (logger) {
       logger('Sending PATCH ' + url);
     }
@@ -82,7 +82,7 @@ export class C4CService implements ODataService {
   async post<T>(text: string, obj: T, logger?: (string) => void): Promise<any> {
     await this.ensureCsrfToken(text, logger);
 
-    const url = '/sap/c4c/odata/v1/' + text;
+    const url = '/sap/c4c/odata/' + text;
     if (logger) {
       logger('Sending POST ' + url);
     }
@@ -99,7 +99,7 @@ export class C4CService implements ODataService {
   }
 
   async query<T>(text: string, logger?: (string) => void): Promise<T> {
-    const url = '/sap/c4c/odata/v1/' + text;
+    const url = '/sap/c4c/odata/' + text;
     if (logger) {
       logger('Querying ' + url);
     }
