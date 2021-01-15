@@ -40,14 +40,18 @@ export interface EdmxProperty {
     Precision?: string;
     Scale?: string;
     FixedLength?: 'true' | 'false';
+    'm:FC_TargetPath': string;
     'sap:creatable': 'true' | 'false';
     'sap:updatable': 'true' | 'false';
     'sap:filterable': 'true' | 'false';
-    'sap:display-format'?: string;
     'sap:text'?: string;
-    'c4c:value-help'?: string;
     'sap:label'?: string;
+    'sap:semantics': 'fixed-values';
+    'sap:display-format'?: string;
+    'c4c:value-help'?: string;
     'c4c:context-property'?: string;
+    'c4c:is-parent-internal-key'?: 'true' | 'false';
+    'c4c:extension-field'?: 'true' | 'false';
   };
 }
 
@@ -62,10 +66,19 @@ export interface EdmxNavigationProperty {
 
 export interface EdmxSchema {
   $: { Namespace: string };
-  EntityContainer: { EntitySet: EdmxEntitySet[] }[];
+  EntityContainer: EdmxEntityContainer[];
   EntityType: EdmxEntityType[];
   ComplexType: EdmxComplexType[];
   Association: EdmxAssociation[];
+}
+
+export interface EdmxEntityContainer {
+  $: {
+    'm:IsDefaultEntityContainer': 'true' | 'false';
+  };
+  EntitySet: EdmxEntitySet[];
+  AssociationSet: EdmxAssociationSet[];
+  FunctionImport: EdmxFunctionImport[];
 }
 
 export interface EdmxComplexType {
@@ -82,10 +95,46 @@ export interface EdmxAssociation {
   End: EdmxAssociationEnd[];
 }
 
+export interface EdmxAssociationSet {
+  $: {
+    Name: string;
+    Association: string;
+    'sap:creatable': 'true' | 'false';
+    'sap:updatable': 'true' | 'false';
+    'sap:deletable': 'true' | 'false';
+  };
+  End: EdmxAssociationSetEnd[];
+}
+
 export interface EdmxAssociationEnd {
   $: {
     Type: string;
     Multiplicity: '1' | '*';
     Role: string;
+  };
+}
+
+export interface EdmxAssociationSetEnd {
+  $: {
+    EntitySet: string;
+    Role: string;
+  };
+}
+
+export interface EdmxFunctionImport {
+  $: {
+    Name: string;
+    ReturnType: string;
+    EntitySet: string;
+    'm:HttpMethod': 'POST' | 'GET';
+  };
+  Parameter: EdmxFunctionImportParameter[];
+}
+
+export interface EdmxFunctionImportParameter {
+  $: {
+    Name: string;
+    Type: string;
+    Mode: 'In';
   };
 }
