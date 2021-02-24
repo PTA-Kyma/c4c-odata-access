@@ -11,7 +11,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": ["fetch", "query", "create", "update"]
+                "enum": ["fetch", "query", "create", "update", "delete"]
               },
               "properties": {
                 "type": "array",

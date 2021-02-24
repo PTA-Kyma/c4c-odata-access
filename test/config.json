@@ -1,0 +1,29 @@
+{
+  "generateTmpEdmxFile": false,
+  "services": {
+    "c4codataapi": {
+      "baseUrl": "v1/c4codataapi",
+      "entitySets": {
+        "IndividualCustomerCollection": {
+          "operations": {
+            "query": {
+              "type": "query",
+              "properties": ["ObjectID", "CustomerID", "FormattedName", "GenderCodeText"]
+            },
+            "fetch": {
+              "type": "fetch",
+              "expand": ["IndividualCustomerAddress", "OwnerEmployeeBasicData"],
+              "properties": ["ObjectID", "FormattedName"]
+            },
+            "update": {
+              "type": "update"
+            },
+            "delete": {
+              "type": "delete"
+            }
+          }
+        }
+      }
+    }
+  }
+}

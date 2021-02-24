@@ -1,0 +1,10 @@
+{
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "/test/config.json"
+            ],
+            "url": "/src/odata-config-schema.json"
+        }
+    ]
+}

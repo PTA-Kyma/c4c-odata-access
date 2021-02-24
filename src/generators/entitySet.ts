@@ -98,8 +98,12 @@ export async function generateEntitySet(
 
         case 'update':
           generateUpdate(outputLines, operationName, context, e, entitySet);
-
           break;
+        
+        case 'delete':
+          generateDelete(outputLines, operationName, context, e, entitySet);
+          break;
+
         default:
           throw new Error('Not supported operation ' + e.type);
       }
@@ -128,7 +132,7 @@ function generateCreate(
   entitySet: EdmxEntitySet
 ): void {
   outputLines.push(`
-   ${operationName}(service: ODataService, obj: ${e.entityName}, logger?: DebugLogger): Promise<any> {   
+  public ${operationName}(service: ODataService, obj: ${e.entityName}, logger?: DebugLogger): Promise<any> {   
     const url = "${context.baseUrl}/${entitySet.$.Name}";    
     return service.post<${e.entityName}>(url, obj, logger);
   },
@@ -155,9 +159,36 @@ function generateUpdate(
   entitySet: EdmxEntitySet
 ): void {
   outputLines.push(`
-   ${operationName}(service: ODataService, objectID: string, obj: ${e.entityName}, logger?: DebugLogger): Promise<any> {   
+  public ${operationName}(service: ODataService, objectID: string, obj: ${e.entityName}, logger?: DebugLogger): Promise<any> {   
     const url = "${context.baseUrl}/${entitySet.$.Name}('" + objectID + "')";    
     return service.patch<${e.entityName}>(url, obj, logger);
+  },
+`);
+
+  const codeLists: { [propertyName: string]: string } = {};
+  context.codeLists[e.entityName] = codeLists;
+  const entityType = context.edmx.entityTypes[entitySet.$.EntityType];
+  entityType.Property.filter(
+    (p) =>
+      p.$['sap:updatable'] === 'true' &&
+      p.$['c4c:value-help'] &&
+      (!e.properties || e.properties.includes(p.$.Name))
+  ).forEach((p) => {
+    codeLists[p.$.Name] = p.$['c4c:value-help'];
+  });
+}
+
+function generateDelete(
+  outputLines: string[],
+  operationName: string,
+  context: ServiceGenerationContext,
+  e: TypescriptOperationConfig,
+  entitySet: EdmxEntitySet
+): void {
+  outputLines.push(`
+   public ${operationName}(service: ODataService, objectID: string, logger?: DebugLogger): Promise<any> {   
+    const url = "${context.baseUrl}/${entitySet.$.Name}('" + objectID + "')";    
+    return service.delete(url, logger);
   },
 `);
 

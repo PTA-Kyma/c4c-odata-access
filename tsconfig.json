@@ -4,7 +4,7 @@
     "outDir": "lib",
     "types": [],
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "./",
+    "baseUrl": "src",
     "sourceMap": true,
     "declaration": true,
     "downlevelIteration": true,
@@ -17,6 +17,9 @@
     "lib": [
       "es2018",
       "dom"
-    ]
-  }
+    ],    
+  },
+  "include": [
+    "src"
+  ]
 }

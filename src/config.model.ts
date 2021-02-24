@@ -20,7 +20,7 @@ export interface EntitySetConfig {
 export interface TypescriptOperationConfig {
   onlySelectedProperties: boolean;
   entityName: string;
-  type: 'query' | 'create' | 'update' | 'fetch';
+  type: 'query' | 'create' | 'update' | 'fetch' | 'delete';
   properties?: string[];
   expand?: string[];
 }
@@ -77,6 +77,10 @@ export function setupDefaultsWhereMissing(
           o.properties = entityType.Property.filter((p) => p.$['sap:creatable'] === 'true').map(
             (p) => p.$.Name
           );
+          break;
+        case 'delete':
+          // do nothing
+          o.properties = [];
           break;
         default:
           throw new Error(

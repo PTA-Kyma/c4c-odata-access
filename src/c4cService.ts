@@ -1,7 +1,7 @@
 import Axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import axiosCookieJarSupport from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
-import { ODataService } from './odataService';
+import { DebugLogger, ODataService } from './odataService';
 
 export interface UsernamePasswordCredentials {
   kind: 'password';
@@ -32,8 +32,9 @@ function createAuthorizationHeader(
 }
 
 export class C4CService implements ODataService {
-  axios: AxiosInstance;
-  csrfToken: string;
+  private readonly axios: AxiosInstance;
+  private csrfToken: string;
+  public baseUrl = '/sap/c4c/odata/';
 
   constructor(credentials: UsernamePasswordCredentials | PseudoBearerTokenCredentials) {
     const jar = new CookieJar();
@@ -50,7 +51,7 @@ export class C4CService implements ODataService {
     axiosCookieJarSupport(this.axios);
   }
 
-  async ensureCsrfToken(text: string, logger?: (string) => void): Promise<any> {
+  async ensureCsrfToken(text: string, logger?: DebugLogger): Promise<any> {
     if (!this.csrfToken) {
       if (logger) {
         logger('No X-CSRF-Token! Performing query...');
@@ -59,10 +60,10 @@ export class C4CService implements ODataService {
     }
   }
 
-  async patch<T>(text: string, obj: T, logger?: (string) => void): Promise<any> {
+  async patch<T>(text: string, obj: T, logger?: DebugLogger): Promise<any> {
     await this.ensureCsrfToken(text, logger);
 
-    const url = '/sap/c4c/odata/' + text;
+    const url = this.baseUrl + text;
     if (logger) {
       logger('Sending PATCH ' + url);
     }
@@ -79,14 +80,14 @@ export class C4CService implements ODataService {
     return result.data;
   }
 
-  async post<T>(text: string, obj: T, logger?: (string) => void): Promise<any> {
+  async post<T>(text: string, obj: T, logger?: DebugLogger): Promise<any> {
     await this.ensureCsrfToken(text, logger);
 
-    const url = '/sap/c4c/odata/' + text;
+    const url = this.baseUrl + text;
     if (logger) {
       logger('Sending POST ' + url);
     }
-    const result = await this.axios.post<ODataQueryResult<T>>(url, obj, {
+    const result = await this.axios.post<any>(url, obj, {
       headers: { 'X-CSRF-Token': this.csrfToken },
       withCredentials: true,
     });
@@ -98,8 +99,8 @@ export class C4CService implements ODataService {
     return result.data;
   }
 
-  async query<T>(text: string, logger?: (string) => void): Promise<T> {
-    const url = '/sap/c4c/odata/' + text;
+  async query<T>(text: string, logger?: DebugLogger): Promise<T> {
+    const url = this.baseUrl + text;
     if (logger) {
       logger('Querying ' + url);
     }
@@ -123,6 +124,25 @@ export class C4CService implements ODataService {
       }
     }
     return result.data?.d?.results;
+  }
+
+  async delete(text: string, logger?: DebugLogger): Promise<any> {
+    await this.ensureCsrfToken(text, logger);
+
+    const url = this.baseUrl + text;
+    if (logger) {
+      logger('Sending POST ' + url);
+    }
+    const result = await this.axios.delete<any>(url, {
+      headers: { 'X-CSRF-Token': this.csrfToken },
+      withCredentials: true,
+    });
+
+    if (logger) {
+      logger(`DELETE returned status ${result.status} ${result.statusText}`);
+    }
+
+    return result.data;
   }
 }
 
