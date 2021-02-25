@@ -68,7 +68,7 @@ export class C4CService implements ODataService {
       logger('Sending PATCH ' + url);
     }
 
-    const result = await this.axios.patch<ODataQueryResult<T>>(url, obj, {
+    const result = await this.axios.patch<ODataQueryResult<T>>(encodeURI(url), obj, {
       headers: { 'X-CSRF-Token': this.csrfToken },
       withCredentials: true,
     });
@@ -87,7 +87,7 @@ export class C4CService implements ODataService {
     if (logger) {
       logger('Sending POST ' + url);
     }
-    const result = await this.axios.post<any>(url, obj, {
+    const result = await this.axios.post<any>(encodeURI(url), obj, {
       headers: { 'X-CSRF-Token': this.csrfToken },
       withCredentials: true,
     });
@@ -110,7 +110,7 @@ export class C4CService implements ODataService {
       options.headers['X-CSRF-Token'] = 'fetch';
     }
 
-    const result = await this.axios.get<ODataQueryResult<T>>(url, options);
+    const result = await this.axios.get<ODataQueryResult<T>>(encodeURI(url), options);
 
     if (logger) {
       logger(`Query returned status ${result.status} ${result.statusText}`);
@@ -133,7 +133,7 @@ export class C4CService implements ODataService {
     if (logger) {
       logger('Sending POST ' + url);
     }
-    const result = await this.axios.delete<any>(url, {
+    const result = await this.axios.delete<any>(encodeURI(url), {
       headers: { 'X-CSRF-Token': this.csrfToken },
       withCredentials: true,
     });
